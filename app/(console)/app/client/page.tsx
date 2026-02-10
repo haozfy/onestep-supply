@@ -21,7 +21,7 @@ export default function ClientPortal() {
       </div>
 
       <div className="rounded-2xl border border-white/[0.10] bg-white/[0.04] p-5">
-        <div className="text-sm font-medium">本月申报（示例布局）</div>
+        <div className="text-sm font-medium">本月计划</div>
         <p className="mt-1 text-sm text-white/60">
           V1：已投产 / 计划投产 / 已销售未生产。
         </p>
@@ -34,7 +34,7 @@ export default function ClientPortal() {
 
         <div className="mt-4 flex gap-2">
           <SecondaryButton>保存草稿</SecondaryButton>
-          <PrimaryButton>提交（进入待确认）</PrimaryButton>
+          <PrimaryButton>提交</PrimaryButton>
         </div>
       </div>
     </div>
