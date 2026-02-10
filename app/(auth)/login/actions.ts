@@ -1,27 +1,85 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-// 1. 导入名要和上面定义的一致 (createClient)
-import { createClient } from "@/app/lib/supabase/server";
+import crypto from "crypto";
+
+type Role = "admin" | "ops" | "client";
+
+function sign(payload: string, secret: string) {
+  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
+}
+
+function makeToken(role: Role) {
+  const secret = process.env.APP_AUTH_SECRET;
+  if (!secret) throw new Error("Missing APP_AUTH_SECRET");
+
+  const exp = Date.now() + 1000 * 60 * 60 * 24 * 30; // 30天
+  const payload = `${role}.${exp}`;
+  const sig = sign(payload, secret);
+  return `${payload}.${sig}`;
+}
+
+function verifyToken(token: string | undefined | null): Role | null {
+  if (!token) return null;
+  const secret = process.env.APP_AUTH_SECRET;
+  if (!secret) return null;
+
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+
+  const role = parts[0] as Role;
+  const exp = Number(parts[1]);
+  const sig = parts[2];
+
+  if (!["admin", "ops", "client"].includes(role)) return null;
+  if (!Number.isFinite(exp) || Date.now() > exp) return null;
+
+  const expected = sign(`${role}.${exp}`, secret);
+  if (expected !== sig) return null;
+
+  return role;
+}
+
+function roleHome(role: Role) {
+  if (role === "client") return "/app/client";
+  if (role === "ops") return "/app/ops";
+  return "/app/admin";
+}
 
 export async function login(formData: FormData) {
-  const email = String(formData.get("email") || "");
-  const password = String(formData.get("password") || "");
+  const password = String(formData.get("password") || "").trim();
+  if (!password) return { error: "请输入密码" };
 
-  // 2. 调用 createClient (记得它是 async 的，虽然 await 不是强制要求，但在某些上下文中是好习惯)
-  const supabase = await createClient();
+  const admin = process.env.APP_ADMIN_PASSWORD || "";
+  const ops = process.env.APP_OPS_PASSWORD || "";
+  const client = process.env.APP_CLIENT_PASSWORD || "";
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+  let role: Role | null = null;
+  if (password === admin) role = "admin";
+  else if (password === ops) role = "ops";
+  else if (password === client) role = "client";
+
+  if (!role) return { error: "密码不正确" };
+
+  const token = makeToken(role);
+  cookies().set("os_role", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
   });
 
-  if (error) {
-    // 建议：带上具体的错误信息，或者只带错误码
-    // redirect(`/login?error=${encodeURIComponent(error.message)}`);
-    return redirect("/login?e=1");
-  }
+  redirect(roleHome(role));
+}
 
-  // 登录成功跳转
-  redirect("/app");
+export async function logout() {
+  cookies().set("os_role", "", { path: "/", maxAge: 0 });
+  redirect("/login");
+}
+
+// 给 middleware/页面使用（可选）
+export async function getRoleFromCookie(): Promise<Role | null> {
+  const token = cookies().get("os_role")?.value;
+  return verifyToken(token);
 }
