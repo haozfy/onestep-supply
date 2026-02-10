@@ -9,7 +9,7 @@ export default function ClientPortal() {
         action={
           <div className="flex gap-2">
             <SecondaryButton>查看历史</SecondaryButton>
-            <PrimaryButton>提交本月申报</PrimaryButton>
+            <PrimaryButton>提交本月需求</PrimaryButton>
           </div>
         }
       />
