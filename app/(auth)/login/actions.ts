@@ -7,12 +7,7 @@ export async function login(formData: FormData) {
   const email = String(formData.get("email") || "");
   const password = String(formData.get("password") || "");
 
-  if (!email || !password) {
-    return { error: "请输入邮箱和密码" };
-  }
-
-  // ✅ 修复点：加上 await
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServerSupabaseClient();
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -20,9 +15,8 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
-    return { error: "邮箱或密码错误" };
+    redirect("/login?e=1");
   }
 
-  // 登录成功 → 进入控制台
   redirect("/app");
 }

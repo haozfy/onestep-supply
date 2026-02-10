@@ -1,4 +1,4 @@
-import { StatCard } from "./ui/widgets";
+import { StatCard } from "@/app/(console)/ui/widgets";
 
 export default function Overview() {
   return (
