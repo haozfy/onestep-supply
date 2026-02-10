@@ -1,65 +1,100 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 
-type Role = "admin" | "ops" | "client";
+type Role = "admin" | "ops" | "client" | "unknown";
 
-function sign(payload: string, secret: string) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
+function hexToBytes(hex: string) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
 }
 
-function verifyToken(token: string | undefined, secret: string): Role | null {
-  if (!token) return null;
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-
-  const role = parts[0] as Role;
-  const exp = Number(parts[1]);
-  const sig = parts[2];
-
-  if (!["admin", "ops", "client"].includes(role)) return null;
-  if (!Number.isFinite(exp) || Date.now() > exp) return null;
-
-  const expected = sign(`${role}.${exp}`, secret);
-  return expected === sig ? role : null;
+function bytesToHex(bytes: ArrayBuffer) {
+  const arr = new Uint8Array(bytes);
+  return Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
-function roleHome(role: Role) {
-  if (role === "client") return "/app/client";
-  if (role === "ops") return "/app/ops";
-  return "/app/admin";
+async function hmacSha256Hex(secret: string, data: string) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
+  return bytesToHex(sig);
 }
 
-export function middleware(req: NextRequest) {
+async function getRoleFromToken(token?: string | null): Promise<Role> {
+  if (!token) return "unknown";
+  const [payload, sig] = token.split(".");
+  if (!payload || !sig) return "unknown";
+
+  const secret = process.env.APP_AUTH_SECRET;
+  if (!secret) return "unknown";
+
+  const expected = await hmacSha256Hex(secret, payload);
+  if (expected !== sig) return "unknown";
+
+  const role = payload.split(":")[0];
+  if (role === "admin" || role === "ops" || role === "client") return role;
+  return "unknown";
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 只保护 /app 下的页面
+  // 放行登录页与静态资源
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname.startsWith("/api")
+  ) {
+    return NextResponse.next();
+  }
+
+  // 只保护 /app 相关
   if (!pathname.startsWith("/app")) return NextResponse.next();
 
-  const secret = process.env.APP_AUTH_SECRET || "";
   const token = req.cookies.get("os_role")?.value;
-  const role = secret ? verifyToken(token, secret) : null;
+  const role = await getRoleFromToken(token);
 
-  // 未登录 → 去 login
-  if (!role) {
+  // 未登录：踢到 /login
+  if (role === "unknown") {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // 角色限制：client 只能看 /app/client；ops 只能看 /app/ops；admin 都能看
-  if (role === "client" && !pathname.startsWith("/app/client")) {
+  // 权限规则
+  const needAdmin = pathname.startsWith("/app/admin") || pathname.startsWith("/app/settings");
+  const needClient = pathname.startsWith("/app/client");
+  const needOps = pathname.startsWith("/app/ops");
+
+  if (needAdmin && role !== "admin") {
     const url = req.nextUrl.clone();
-    url.pathname = roleHome(role);
+    url.pathname = "/app";
     return NextResponse.redirect(url);
   }
 
-  if (role === "ops" && !pathname.startsWith("/app/ops")) {
+  if (needClient && !(role === "client" || role === "admin")) {
     const url = req.nextUrl.clone();
-    url.pathname = roleHome(role);
+    url.pathname = "/app";
     return NextResponse.redirect(url);
   }
 
-  // admin 默认可看全部；也可改成只能看 /app/admin
+  if (needOps && !(role === "ops" || role === "admin")) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/app";
+    return NextResponse.redirect(url);
+  }
+
   return NextResponse.next();
 }
 
