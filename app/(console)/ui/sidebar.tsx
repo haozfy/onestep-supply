@@ -1,14 +1,13 @@
-"use client"; // 1. 必须声明为 Client Component 才能获取当前路径高亮菜单
+"use client";
 
-import Link from "next/link"; // 2. 修正：Import -> import
-import { usePathname } from "next/navigation"; // 引入路径钩子
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { BRAND } from "@/app/ui/brand";
 import { LayoutGrid, Factory, Users, Shield, Settings } from "lucide-react";
+import { BRAND } from "@/app/ui/brand";
 import { cn } from "@/app/ui/cn";
 
-// 提取 NavItem 组件以便复用和管理状态
-const NavItem = ({
+function NavItem({
   href,
   icon,
   title,
@@ -18,70 +17,52 @@ const NavItem = ({
   icon: ReactNode;
   title: string;
   tag?: string;
-}) => {
+}) {
   const pathname = usePathname();
-  // 判断是否激活：严格匹配或者子路径匹配（排除根路径 /app 防止全部高亮）
-  const isActive =
+  const active =
     href === "/app" ? pathname === "/app" : pathname.startsWith(href);
 
   return (
     <Link
       href={href}
       className={cn(
-        "group flex items-center gap-3 rounded-xl px-3 py-2 transition-all duration-200",
-        isActive
-          ? "bg-white/[0.1] text-white shadow-sm" // 激活状态样式
-          : "text-white/60 hover:bg-white/[0.06] hover:text-white" // 默认/悬停样式
+        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
+        active
+          ? "bg-white/[0.10] text-white"
+          : "text-white/60 hover:bg-white/[0.06] hover:text-white"
       )}
     >
-      <span
-        className={cn(
-          "transition-colors",
-          isActive ? "text-white" : "text-white/50 group-hover:text-white"
-        )}
-      >
+      <span className={active ? "text-white" : "text-white/50"}>
         {icon}
       </span>
-      <span className="flex-1 text-sm font-medium">{title}</span>
-      {tag ? (
-        <span
-          className={cn(
-            "rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors",
-            isActive
-              ? "bg-white/20 text-white"
-              : "bg-white/[0.08] text-white/50 group-hover:text-white/70"
-          )}
-        >
+      <span className="flex-1 font-medium">{title}</span>
+      {tag && (
+        <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 text-[10px] text-white/50">
           {tag}
         </span>
-      ) : null}
+      )}
     </Link>
   );
-};
+}
 
 export function Sidebar() {
   return (
-    // 3. 样式优化：添加 h-screen 和 flex-col 确保布局高度正确
-    <aside className="fixed left-0 top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-white/[0.08] bg-[#0a0a0c] xl:flex">
-      {/* Brand Header */}
+    <aside className="hidden h-screen w-[280px] shrink-0 flex-col border-r border-white/[0.08] bg-[#0a0a0c] xl:flex">
+      {/* Brand */}
       <div className="px-5 py-6">
-        <div className="flex items-center gap-3 rounded-2xl border border-white/[0.10] bg-white/[0.04] p-3 px-4 shadow-sm">
-          {/* 如果 BRAND 有 logo 可以放在这 */}
-          <div>
-            <div className="text-sm font-bold tracking-tight text-white">
-              {BRAND.name}
-            </div>
-            <div className="text-[10px] text-white/40">{BRAND.tagline}</div>
+        <div className="rounded-2xl border border-white/[0.10] bg-white/[0.04] p-4">
+          <div className="text-sm font-semibold">{BRAND.name}</div>
+          <div className="mt-1 text-xs text-white/40">
+            {BRAND.tagline}
           </div>
         </div>
       </div>
 
-      {/* Scrollable Navigation Area */}
-      <div className="flex-1 space-y-6 overflow-y-auto px-4 py-2 scrollbar-none">
-        {/* Group 1: CONSOLE */}
+      {/* Nav */}
+      <div className="flex-1 space-y-6 px-4">
         <div>
-          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-white/30">
-            Console
+          <div className="mb-2 px-2 text-[10px] font-semibold tracking-widest text-white/30">
+            CONSOLE
           </div>
           <div className="space-y-1">
             <NavItem href="/app" icon={<LayoutGrid size={18} />} title="总览" />
@@ -106,31 +87,28 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* Group 2: SYSTEM */}
         <div>
-          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-white/30">
-            System
+          <div className="mb-2 px-2 text-[10px] font-semibold tracking-widest text-white/30">
+            SYSTEM
           </div>
-          <div className="space-y-1">
-            <NavItem
-              href="/app/settings"
-              icon={<Settings size={18} />}
-              title="设置"
-            />
-          </div>
+          <NavItem
+            href="/app/settings"
+            icon={<Settings size={18} />}
+            title="设置"
+          />
         </div>
       </div>
 
-      {/* Footer Status */}
-      <div className="mt-auto px-5 pb-6 pt-4">
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 backdrop-blur-sm">
+      {/* Footer */}
+      <div className="px-5 pb-6 pt-4">
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
           <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
-            <div className="text-xs font-medium text-white/80">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="text-xs font-medium text-white/80">
               System Online
-            </div>
+            </span>
           </div>
-          <div className="mt-2 text-[10px] leading-relaxed text-white/40">
+          <div className="mt-2 text-[10px] text-white/40">
             Production Environment
             <br />
             v2.4.0 (Stable)
