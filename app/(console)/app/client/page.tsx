@@ -27,9 +27,9 @@ export default function ClientPortal() {
         </p>
 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Field label="当前已投产机器数（必填）" placeholder="例如 120" />
-          <Field label="未来计划投产（选填）" placeholder="例如 20" />
-          <Field label="已销售未生产（选填）" placeholder="例如 30" />
+          <Field label="当前已投产机器数（必填）" placeholder="" />
+          <Field label="未来计划投产（选填）" placeholder="" />
+          <Field label="已销售未生产（选填）" placeholder="" />
         </div>
 
         <div className="mt-4 flex gap-2">
