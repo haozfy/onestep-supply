@@ -16,10 +16,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="relative flex min-h-screen">
         {showSidebar ? <Sidebar /> : null}
 
-        {/* 如果没有 sidebar，把内容顶到左边 */}
         <div className={showSidebar ? "flex-1 xl:pl-[280px]" : "flex-1"}>
           <Topbar />
-          <main className="mx-auto max-w-6xl px-6 pb-16 pt-6">{children}</main>
+          {/* ✅ 关键：不要 mx-auto + max-w-6xl */}
+          <main className="w-full px-6 pb-16 pt-6 xl:px-8">
+            {children}
+          </main>
         </div>
       </div>
     </div>
