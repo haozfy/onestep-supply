@@ -2,47 +2,48 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import crypto from "crypto";
 
 type Role = "admin" | "ops" | "client";
 
-function makeToken(role: Role) {
-  const secret = process.env.APP_AUTH_SECRET!;
-  const payload = `${role}:${Date.now()}`;
-  const sig = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
+function roleFromPassword(pwdRaw: string): Role | null {
+  const pwd = (pwdRaw ?? "").trim(); // 去空格，避免你复制粘贴多了空格
 
-  return `${payload}.${sig}`;
-}
+  // ✅ 你的三套密码（大小写敏感）
+  if (pwd === "Hao") return "admin";
+  if (pwd === "Zhou") return "ops";
+  if (pwd === "Tao") return "client";
 
-function verifyPassword(password: string): Role | null {
-  if (password === process.env.APP_ADMIN_PASSWORD) return "admin";
-  if (password === process.env.APP_OPS_PASSWORD) return "ops";
-  if (password === process.env.APP_CLIENT_PASSWORD) return "client";
   return null;
 }
 
 export async function login(formData: FormData) {
-  const password = String(formData.get("password") || "").trim();
+  const password = String(formData.get("password") ?? "");
+  const role = roleFromPassword(password);
 
-  const role = verifyPassword(password);
   if (!role) {
-    return { error: "密码错误" };
+    // 让 UI 显示错误（不 redirect）
+    return { ok: false, message: "密码错误" };
   }
 
-  const token = makeToken(role);
-
-  // ✅ 正确的 cookies 用法
+  // ✅ 注意：在你当前环境 cookies() 要 await
   const cookieStore = await cookies();
 
-  cookieStore.set("os_role", token, {
+  cookieStore.set("os_role", role, {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
     path: "/",
+    maxAge: 60 * 60 * 24 * 30, // 30天
   });
 
-  redirect("/app");
+  // 登录后按角色跳转
+  if (role === "admin") redirect("/app");
+  if (role === "ops") redirect("/app/ops");
+  redirect("/app/client");
+}
+
+export async function logout() {
+  const cookieStore = await cookies();
+  cookieStore.set("os_role", "", { path: "/", maxAge: 0 });
+  redirect("/login");
 }
