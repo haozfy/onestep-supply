@@ -33,14 +33,14 @@ export default function LoginUI() {
               OneStep Console
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-white/50">
-              Supply Intelligence Console — 单一事实源：机器 → 消耗 → 销售确认 → 生产批次 → 交付闭环
+              Supply Intelligence Console 
             </p>
           </div>
 
           {/* Card */}
           <div className="rounded-2xl border border-white/[0.10] bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">登录</div>
+              <div className="text-sm font-medium">login</div>
               <div className="text-xs text-white/40">v2.4.0</div>
             </div>
 
@@ -51,11 +51,11 @@ export default function LoginUI() {
                   name="password"
                   type="password"
                   autoFocus
-                  placeholder="输入密码"
+                  placeholder="password"
                   className="mt-2 w-full rounded-xl border border-white/[0.10] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-white/[0.18]"
                 />
                 <div className="mt-2 text-[11px] text-white/35">
-                  仅限授权人员使用。操作将记录时间与角色（Client / Ops / Admin）。
+                  Authrized person only。
                 </div>
               </div>
 
@@ -64,7 +64,7 @@ export default function LoginUI() {
                 disabled={pending}
                 className="w-full rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 transition disabled:opacity-60"
               >
-                {pending ? "登录中…" : "登录"}
+                {pending ? "login…" : "login"}
               </button>
 
               {msg ? (
