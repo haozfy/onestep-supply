@@ -4,8 +4,8 @@ export default function ClientPortal() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="甲方门户"
-        desc="申报机器数（事实与计划）。试剂需求自动计算；不提供“采购量”输入，避免博弈。"
+        title="泽天春来"
+        desc="试剂需求自动计算"
         action={
           <div className="flex gap-2">
             <SecondaryButton>查看历史</SecondaryButton>
@@ -23,7 +23,7 @@ export default function ClientPortal() {
       <div className="rounded-2xl border border-white/[0.10] bg-white/[0.04] p-5">
         <div className="text-sm font-medium">本月申报（示例布局）</div>
         <p className="mt-1 text-sm text-white/60">
-          V1：甲方只有 1 个账号。这里提供 3 个数字输入：已投产 / 计划投产 / 已销售未生产。
+          V1：已投产 / 计划投产 / 已销售未生产。
         </p>
 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
