@@ -55,7 +55,7 @@ export default function LoginUI() {
                   className="mt-2 w-full rounded-xl border border-white/[0.10] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-white/[0.18]"
                 />
                 <div className="mt-2 text-[11px] text-white/35">
-                  Authrized person only。
+                  Authorized personnel only。
                 </div>
               </div>
 
